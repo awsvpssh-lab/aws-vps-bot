@@ -7,19 +7,8 @@ echo "     BOT TELEGRAM - CONTROL DE VPS         "
 echo "============================================"
 echo ""
 
-if [ -f /etc/bot-vps/config.env ]; then
-  source /etc/bot-vps/config.env
-else
-  read -p "Ingresa el TOKEN de tu Bot: " TOKEN
-  read -p "Ingresa tu ID de Telegram: " ADMIN_ID
-  mkdir -p /etc/bot-vps
-  cat > /etc/bot-vps/config.env << 'EOF'
-TOKEN="$TOKEN"
-ADMIN_ID=ADMIN_ID
-EOF
-  sed -i "s/TOKEN=\"\$TOKEN\"/TOKEN=\"$TOKEN\"/" /etc/bot-vps/config.env
-  sed -i "s/ADMIN_ID=ADMIN_ID/ADMIN_ID=$ADMIN_ID/" /etc/bot-vps/config.env
-fi
+read -p "🔑 Ingresa el TOKEN de tu Bot: " TOKEN
+read -p "🆔 Ingresa tu ID de Telegram: " ADMIN_ID
 
 echo ""
 echo "📦 Instalando dependencias..."
@@ -31,6 +20,11 @@ pip3 install python-telegram-bot==13.7 psutil --break-system-packages >/dev/null
 
 mkdir -p /etc/bot-vps
 cd /etc/bot-vps || exit
+
+cat > config.py << EOF
+TOKEN = "$TOKEN"
+ADMIN_ID = $ADMIN_ID
+EOF
 
 cat > bot.py << 'PYTHON_EOF'
 from telegram import Update, ReplyKeyboardMarkup
@@ -232,21 +226,13 @@ if __name__ == "__main__":
     main()
 PYTHON_EOF
 
-cat > config.py << 'EOF'
-import os
-TOKEN = os.environ.get("TOKEN", "")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
-EOF
-
-cat > /etc/systemd/system/bot-vps.service << 'EOF'
+cat > /etc/systemd/system/bot-vps.service << EOF
 [Unit]
 Description=Panel AWS-VPS
 After=network.target
 
 [Service]
 WorkingDirectory=/etc/bot-vps
-Environment="TOKEN="
-Environment="ADMIN_ID="
 ExecStart=/usr/bin/python3 /etc/bot-vps/bot.py
 Restart=always
 User=root
@@ -254,9 +240,6 @@ User=root
 [Install]
 WantedBy=multi-user.target
 EOF
-
-sed -i "s/Environment=\"TOKEN=\"/Environment=\"TOKEN=$TOKEN\"/" /etc/systemd/system/bot-vps.service
-sed -i "s/Environment=\"ADMIN_ID=\"/Environment=\"ADMIN_ID=$ADMIN_ID\"/" /etc/systemd/system/bot-vps.service
 
 systemctl daemon-reload >/dev/null 2>&1
 systemctl enable bot-vps >/dev/null 2>&1
