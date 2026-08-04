@@ -226,7 +226,7 @@ if __name__ == "__main__":
     main()
 PYTHON_EOF
 
-cat > /etc/systemd/system/bot-vps.service << EOF
+cat > /etc/systemd/system/bot-vps.service << 'EOF'
 [Unit]
 Description=Panel AWS-VPS
 After=network.target
@@ -248,4 +248,3 @@ systemctl restart bot-vps
 echo ""
 echo "✅ TODO LISTO!"
 echo "Escribe /start en tu bot de Telegram"
-EOF
